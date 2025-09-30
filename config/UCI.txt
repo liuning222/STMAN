@@ -1,0 +1,80 @@
+import argparse
+import sys
+import torch
+
+
+def get_link_prediction_args():
+    """
+    get the args for the link prediction task
+    """
+    # arguments for model
+    parser = argparse.ArgumentParser('Interface for the link prediction task')
+    parser.add_argument('--seed', type=int, default='777', help='seed')
+    parser.add_argument('--dataset', type=str, default='UCI',
+                        choices=['Enron', 'UCI', 'BitCoinOTC', 'BitCoinAlpha', 'HepPh', 'ML-10M'], help='dataset to be used')
+    parser.add_argument('--featureless', type=bool, default=True,
+                        help='True if one-hot encoding.')
+    parser.add_argument('--num_runs', type=int, default=3, help='number of runs')
+    parser.add_argument('--gpu', type=int, default=0, help='number of gpu to use')
+    parser.add_argument('--learning_rate', type=float, default=0.015, help='learning rate')
+    parser.add_argument('--epochs', type=int, default=10000, help='number of epochs')
+    parser.add_argument('-lr_decay_step', dest='lr_decay_step', default=1000, type=int, help='lr decay step')
+    parser.add_argument('-lr_decay_factor', dest='lr_decay_factor', default=0.9, type=float, help='lr decay factor')
+    parser.add_argument('--weight_decay', type=float, default=0.005, help='weight decay')
+    parser.add_argument('--patience', type=int, default=300, help='patience for early stopping')
+
+
+    # arguments for time encoding layer
+    parser.add_argument('--time_encoding_dim', type=int, default=64,
+                        help='TimeEncoding layer config: # dimension of the time encoding layer ')
+
+    # arguments for TAS layers
+    parser.add_argument('--num_ta_structural_heads', type=str, default='8',
+                        help='TAS attention layer config: # attention heads in each TAS attention layer. allow for multiheads for each layer')
+    parser.add_argument('--ta_structural_layer_dims', type=str, default='64',
+                        help='TAS attention layer config: # dimension of each spatial embedding layer')
+    parser.add_argument('--ta_structural_drop', type=float, default=0.7,
+                        help='TAS attention Dropout (1 - keep probability).')
+
+    # arguments for structural aware temporal attention layera
+    parser.add_argument('--num_sa_temporal_heads', type=str, default='8',
+                        help='SAT attention layer config: # attention heads in each layer. allow for multiheads for each layer')
+    parser.add_argument('--sa_temporal_layer_dims', type=str, default='64',
+                        help='SAT attention layer config: # dimension of the neighbor time attention layer')
+    parser.add_argument('--sa_temporal_drop', type=float, default=0.7,
+                        help='SAT attention Dropout (1 - keep probability).')
+
+    # arguments for historical attention layers
+    parser.add_argument('--num_temporal_heads', type=str, default='8',
+                        help='Historical attention layer config: # attention heads in each Temporal attention layer')
+    parser.add_argument('--temporal_layer_dims', type=str, default='64',
+                        help='Historical attention layer config: # dimension of the temporal attention layer')
+    parser.add_argument('--temporal_drop', type=float, default=0.7,
+                        help='Historical attention Dropout (1 - keep probability).')
+    parser.add_argument('--window', type=int, default=-1,
+                        help='Window for historical attention (default : -1 => full)')
+
+    parser.add_argument('--residual', type=bool, default=True,
+                        help='Use residual for both spatial and temporal layers')
+
+    # arguments for validation and test
+    parser.add_argument('--test_interval_epochs', type=int, default=1, help='how many epochs to perform testing once')
+    parser.add_argument('--val_interval_epochs', type=int, default=1, help='how many epochs to perform validation once')
+
+    # Weight for negative samples in the loss function.
+    parser.add_argument('--neg_weight', type=float, default=1.0,
+                        help='Weightage for negative samples')
+    parser.add_argument('--adj_order', type=int, default=2,
+                        help='Adj order for mutual information based pretext loss')
+    parser.add_argument('--consist_weight', type=float, default=10.0, help='Weight for consistency loss')
+    parser.add_argument('--indenp_weight', type=float, default=0.015, help='Weight for independency loss')
+
+    try:
+        args = parser.parse_args()
+        args.device = f'cuda:{args.gpu}' if torch.cuda.is_available() and args.gpu >= 0 else 'cpu'
+    except:
+        parser.print_help()
+        sys.exit()
+
+    return args
+
