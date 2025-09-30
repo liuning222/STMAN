@@ -12,6 +12,10 @@ Dependencies
 -sklearn
 -torch_scatter
 
+Config
+=========
+Hyperparameter config for all datasets can be found in config/
+
 Training
 ==========
 run main_single_link_prediction.py
